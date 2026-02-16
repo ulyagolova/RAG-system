@@ -25,13 +25,11 @@ def test_healthcheck() -> None:
 def test_create_user_returns_201(monkeypatch) -> None:
     call_args: dict[str, object] = {}
 
-    def fake_create_user(*, login: str, digital_footprints: str, database_url: str | None, echo_sql: bool):
+    def fake_create_user(*, login: str, digital_footprints: str):
         call_args.update(
             {
                 "login": login,
                 "digital_footprints": digital_footprints,
-                "database_url": database_url,
-                "echo_sql": echo_sql,
             }
         )
         return SimpleNamespace(id=7, login=login, updated_at=datetime(2026, 2, 16, tzinfo=UTC))
@@ -39,19 +37,13 @@ def test_create_user_returns_201(monkeypatch) -> None:
     monkeypatch.setattr("src.api.routers.users.create_user", fake_create_user)
 
     with _build_client() as client:
-        response = client.post(
-            "/users",
-            params={"database_url": "sqlite:///tmp.db", "echo_sql": "true"},
-            json={"login": "roman", "digital_footprints": '{"events":[]}'},
-        )
+        response = client.post("/users", json={"login": "roman", "digital_footprints": '{"events":[]}'})
 
     assert response.status_code == 201
     assert response.json()["id"] == 7
     assert call_args == {
         "login": "roman",
         "digital_footprints": '{"events":[]}',
-        "database_url": "sqlite:///tmp.db",
-        "echo_sql": True,
     }
 
 
@@ -71,9 +63,7 @@ def test_create_user_conflict_returns_409(monkeypatch) -> None:
 def test_init_db_endpoint_runs_services_in_order(monkeypatch) -> None:
     call_order: list[str] = []
 
-    def fake_init_db(*, database_url: str | None, echo_sql: bool, drop_existing: bool) -> None:
-        assert database_url is None
-        assert echo_sql is False
+    def fake_init_db(*, drop_existing: bool) -> None:
         assert drop_existing is True
         call_order.append("init_db")
 
@@ -82,14 +72,12 @@ def test_init_db_endpoint_runs_services_in_order(monkeypatch) -> None:
         call_order.append("load_courses")
         return [{"name": "Python", "description": "Basics"}]
 
-    def fake_seed_courses(courses, *, database_url: str | None, echo_sql: bool) -> int:
+    def fake_seed_courses(courses) -> int:
         assert courses == [{"name": "Python", "description": "Basics"}]
         call_order.append("seed_courses")
         return 1
 
-    def fake_list_and_vectorize_courses(
-        *, database_url: str | None, echo_sql: bool, recreate_collection: bool
-    ):
+    def fake_list_and_vectorize_courses(*, recreate_collection: bool):
         assert recreate_collection is True
         call_order.append("list_and_vectorize_courses")
         return SimpleNamespace(courses_count=1, chunks_count=2, collection_recreated=True)
@@ -116,14 +104,10 @@ def test_init_db_endpoint_runs_services_in_order(monkeypatch) -> None:
 
 
 def test_generate_recommendation_response(monkeypatch) -> None:
-    def fake_generate_recommendation(
-        *, login: str, top_k: int, search_k: int, database_url: str | None, echo_sql: bool
-    ):
+    def fake_generate_recommendation(*, login: str, top_k: int, search_k: int):
         assert login == "alex_dev"
         assert top_k == 3
         assert search_k == 10
-        assert database_url is None
-        assert echo_sql is False
         return SimpleNamespace(
             recommendation=SimpleNamespace(
                 id=11,
@@ -160,7 +144,7 @@ def test_generate_recommendation_response(monkeypatch) -> None:
 
 
 def test_list_recommendations_not_found_returns_404(monkeypatch) -> None:
-    def fake_list_recommendations(*, login: str, database_url: str | None, echo_sql: bool):
+    def fake_list_recommendations(*, login: str):
         raise NotFoundError(f"User with login '{login}' not found.")
 
     monkeypatch.setattr("src.api.routers.recommendations.list_recommendations", fake_list_recommendations)
