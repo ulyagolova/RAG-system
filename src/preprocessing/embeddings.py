@@ -7,6 +7,17 @@ Event = Mapping[str, Any]
 DigitalFootprints = Mapping[str, Any] | Sequence[Event] | str | None
 
 
+def _normalize_entity_type(entity_type: str) -> str:
+    normalized = entity_type.strip().lower()
+    mapping = {
+        "course": "курс",
+        "article": "статья",
+        "program": "программа",
+        "track": "трек",
+    }
+    return mapping.get(normalized, entity_type.strip())
+
+
 def create_embedding_passage_input(title: str, description: str) -> str:
     text = f"""
     Название: {title}
@@ -40,6 +51,7 @@ def create_embedding_question_input(digital_footprints: DigitalFootprints) -> st
             continue
         event_type = str(event.get("event_type") or "").strip()
         entity_type = str(event.get("entity_type") or "").strip()
+        normalized_entity_type = _normalize_entity_type(entity_type)
         entity_name = str(event.get("entity_name") or "").strip()
         duration = event.get("duration_seconds")
 
@@ -48,21 +60,21 @@ def create_embedding_question_input(digital_footprints: DigitalFootprints) -> st
 
         duration_info = ""
         if isinstance(duration, int | float) and duration > 0:
-            duration_info = f" ({int(duration)} sec)"
+            duration_info = f" ({int(duration)} сек)"
 
         if event_type == "view":
-            label = f"View {entity_type}" if entity_type else "View"
-            views.append(f'{label} "{entity_name}"{duration_info}')
+            prefix = f"{normalized_entity_type} " if normalized_entity_type else ""
+            views.append(f'{prefix}"{entity_name}"{duration_info}'.strip())
         elif event_type == "favorite":
-            label = f"Favorite {entity_type}" if entity_type else "Favorite"
-            favorites.append(f'{label} "{entity_name}"')
+            prefix = f"{normalized_entity_type} " if normalized_entity_type else ""
+            favorites.append(f'{prefix}"{entity_name}"'.strip())
         elif event_type == "search":
-            searches.append(f"Search: {entity_name}")
+            searches.append(entity_name)
         elif event_type == "article_read":
-            articles.append(f'Article: "{entity_name}"{duration_info}')
+            articles.append(f'"{entity_name}"{duration_info}')
         else:
-            label = event_type or "event"
-            prefix = f"{label} {entity_type}".strip()
+            label = event_type or "событие"
+            prefix = f"{label} {normalized_entity_type}".strip()
             other.append(f'{prefix} "{entity_name}"{duration_info}')
 
     parts: list[str] = []

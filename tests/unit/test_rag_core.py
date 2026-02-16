@@ -34,6 +34,8 @@ def test_create_embedding_question_input_builds_summary() -> None:
     assert "Просмотры:" in result
     assert "Поиск:" in result
     assert "Избранное:" in result
+    assert "Просмотры: Просмотр" not in result
+    assert "Избранное: Избранное" not in result
 
 
 def test_format_courses_context_empty() -> None:
