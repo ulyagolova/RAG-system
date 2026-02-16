@@ -19,11 +19,7 @@ def seed_courses_command(context: CLIContext, file_path: Path) -> None:
         raise click.ClickException("No courses found in the provided file.")
 
     try:
-        created = seed_courses(
-            courses,
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        created = seed_courses(courses)
     except ValidationError as exc:
         raise click.ClickException(str(exc)) from exc
     except ServiceError as exc:
@@ -38,10 +34,7 @@ def seed_courses_command(context: CLIContext, file_path: Path) -> None:
 @click.pass_obj
 def show_courses_command(context: CLIContext) -> None:
     try:
-        courses = list_courses(
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        courses = list_courses()
     except ServiceError as exc:
         raise click.ClickException(str(exc)) from exc
     except Exception as exc:  # pragma: no cover - surfacing database errors to CLI

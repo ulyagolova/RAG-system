@@ -35,11 +35,7 @@ def init_db_command(
     skip_courses_seed: bool,
 ) -> None:
     try:
-        init_db(
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-            drop_existing=drop_existing,
-        )
+        init_db(drop_existing=drop_existing)
         inserted = 0
         if not skip_courses_seed:
             courses = load_courses(courses_file)
@@ -47,13 +43,9 @@ def init_db_command(
                 raise click.ClickException("No courses found in the provided file.")
             inserted = seed_courses(
                 courses,
-                database_url=context.database_url,
-                echo_sql=context.echo_sql,
             )
 
         stats = list_and_vectorize_courses(
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
             recreate_collection=drop_existing,
         )
     except ServiceError as exc:

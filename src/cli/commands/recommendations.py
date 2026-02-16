@@ -19,12 +19,7 @@ from src.services import (
 @click.pass_obj
 def add_recommendation_command(context: CLIContext, login: str, text: str) -> None:
     try:
-        recommendation = add_recommendation(
-            login=login,
-            text=text,
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        recommendation = add_recommendation(login=login, text=text)
     except NotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
     except ServiceError as exc:
@@ -40,11 +35,7 @@ def add_recommendation_command(context: CLIContext, login: str, text: str) -> No
 @click.pass_obj
 def show_recommendations_command(context: CLIContext, login: str) -> None:
     try:
-        recommendations = list_recommendations(
-            login=login,
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        recommendations = list_recommendations(login=login)
     except NotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
     except ServiceError as exc:
@@ -72,13 +63,7 @@ def generate_recommendation_command(
     search_k: int,
 ) -> None:
     try:
-        result = generate_recommendation(
-            login=login,
-            top_k=top_k,
-            search_k=search_k,
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        result = generate_recommendation(login=login, top_k=top_k, search_k=search_k)
     except NotFoundError as exc:
         raise click.ClickException(str(exc)) from exc
     except ServiceError as exc:

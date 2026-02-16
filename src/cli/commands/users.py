@@ -16,12 +16,7 @@ from src.services import AlreadyExistsError, ServiceError, create_user, list_use
 @click.pass_obj
 def create_user_command(context: CLIContext, login: str, digital_footprints: str) -> None:
     try:
-        user = create_user(
-            login=login,
-            digital_footprints=digital_footprints,
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        user = create_user(login=login, digital_footprints=digital_footprints)
     except AlreadyExistsError as exc:
         raise click.ClickException(str(exc)) from exc
     except ServiceError as exc:
@@ -36,10 +31,7 @@ def create_user_command(context: CLIContext, login: str, digital_footprints: str
 @click.pass_obj
 def show_users_command(context: CLIContext) -> None:
     try:
-        users = list_users(
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        users = list_users()
     except ServiceError as exc:
         raise click.ClickException(str(exc)) from exc
     except Exception as exc:  # pragma: no cover - surfacing database errors to CLI
@@ -68,11 +60,7 @@ def seed_users_command(context: CLIContext, file_path: Path) -> None:
         raise click.ClickException("No users found in the provided file.")
 
     try:
-        stats = seed_users(
-            users,
-            database_url=context.database_url,
-            echo_sql=context.echo_sql,
-        )
+        stats = seed_users(users)
     except ServiceError as exc:
         raise click.ClickException(str(exc)) from exc
     except Exception as exc:  # pragma: no cover - surfacing service errors to CLI
