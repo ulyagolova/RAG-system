@@ -39,7 +39,7 @@ def add_recommendation(
         if user is None:
             raise NotFoundError(f"User with login '{login}' not found.")
         rec_repo = RecommendationRepository(session)
-        return rec_repo.create(user_id=user.id, text=_fit_recommendation_text(text))
+        return rec_repo.create(user_id=user.id, text=text)
 
 
 def list_recommendations(
@@ -85,7 +85,7 @@ def generate_recommendation(
         rec_repo = RecommendationRepository(session)
         recommendation = rec_repo.create(
             user_id=user.id,
-            text=_fit_recommendation_text(pipeline_result.recommendation_text),
+            text=pipeline_result.recommendation_text,
         )
 
     debug_file_path = _write_recommendation_debug_file(
@@ -135,13 +135,6 @@ def _parse_digital_footprints(
                 normalized_events.append(item)
         return normalized_events
     return stripped
-
-
-def _fit_recommendation_text(text: str, *, max_length: int = 300) -> str:
-    normalized = text.strip()
-    if len(normalized) <= max_length:
-        return normalized
-    return normalized[: max_length - 3].rstrip() + "..."
 
 
 def _write_recommendation_debug_file(
